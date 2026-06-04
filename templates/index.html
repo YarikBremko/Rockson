@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rockson Performance — Schedule App</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Variables ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0d0d0d;
+  --surface: #141414;
+  --card:    #1a1a1a;
+  --border:  #2a2a2a;
+  --gold:    #f9b233;
+  --text:    #f0f0f0;
+  --muted:   #666666;
+  --danger:  #e05555;
+  --success: #4caf50;
+  --radius:  4px;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+.hidden   { display: none !important; }
+.gold     { color: var(--gold); }
+.muted    { color: var(--muted); }
+.danger   { color: var(--danger); }
+.bebas    { font-family: var(--font-display); letter-spacing: 1px; }
+
+.label-upper {
+  font-size: 9px; font-weight: 500; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.divider {
+  height: 1px; background: var(--border);
+  margin: 20px 0; flex-shrink: 0;
+}
+
+.section-heading {
+  font-size: 9px; font-weight: 500; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.section-heading::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body); font-size: 11px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 8px 16px; border-radius: var(--radius); cursor: pointer;
+  border: 1px solid var(--border); background: none; color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s;
+  white-space: nowrap;
+}
+.btn:hover  { border-color: var(--muted); color: var(--text); }
+.btn:active { opacity: .8; }
+
+.btn-primary {
+  background: var(--gold); border-color: var(--gold); color: #000; font-weight: 600;
+}
+.btn-primary:hover { background: #e0a020; border-color: #e0a020; color: #000; }
+
+.btn-danger { border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+
+.btn-sm { font-size: 10px; padding: 5px 10px; }
+.btn-xs { font-size: 9px;  padding: 3px 7px; }
+
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 13px; padding: 4px 6px;
+  border-radius: var(--radius); transition: color .12s, background .12s;
+  font-family: var(--font-body);
+}
+.icon-btn:hover { color: var(--text); background: var(--border); }
+
+/* ── Inputs ────────────────────────────────────────────────────────────── */
+input, select, textarea {
+  font-family: var(--font-body); font-size: 13px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 7px 10px; outline: none; transition: border-color .15s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button { display: none; }
+select option { background: var(--surface); }
+textarea { resize: vertical; min-height: 60px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
+               text-transform: uppercase; color: var(--muted); }
+
+/* ── Tags / Pills ──────────────────────────────────────────────────────── */
+.tag {
+  font-size: 9px; padding: 2px 7px; border-radius: 2px;
+  background: var(--border); color: var(--muted); letter-spacing: .5px;
+}
+.muscle-pill {
+  display: inline-block; font-size: 9px; padding: 2px 7px;
+  border-radius: 20px; font-weight: 500; text-transform: uppercase;
+  letter-spacing: .8px; margin-top: 3px;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────── */
+#topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  height: 52px; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; position: sticky; top: 0; z-index: 50;
+}
+
+#logo {
+  font-family: var(--font-display); font-size: 19px; letter-spacing: 3px;
+  display: flex; align-items: center; gap: 8px;
+}
+#logo span { color: var(--gold); }
+
+#nav { display: flex; gap: 2px; }
+.nav-btn {
+  font-family: var(--font-body); font-size: 11px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); background: none; border: none;
+  padding: 7px 13px; border-radius: var(--radius); cursor: pointer;
+  transition: color .12s, background .12s;
+}
+.nav-btn:hover  { color: var(--text); }
+.nav-btn.active { color: var(--text); background: var(--card); }
+
+/* ── App body ──────────────────────────────────────────────────────────── */
+#app-body { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 52px); }
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+#sidebar {
+  width: 210px; background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 18px 0; display: flex; flex-direction: column;
+  flex-shrink: 0; overflow-y: auto;
+}
+
+.sidebar-section { padding: 0 14px; margin-bottom: 22px; }
+
+.client-btn {
+  width: 100%; text-align: left; background: none; border: none;
+  color: var(--text); padding: 7px 10px; border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; margin-bottom: 2px; transition: background .12s;
+}
+.client-btn:hover  { background: var(--card); }
+.client-btn.active { background: var(--card); color: var(--gold); }
+
+.client-badge {
+  font-size: 9px; color: var(--muted); background: var(--border);
+  padding: 2px 5px; border-radius: 2px; letter-spacing: .5px; white-space: nowrap;
+}
+
+.new-btn {
+  width: 100%; text-align: left; background: none;
+  border: 1px dashed var(--border); color: var(--muted);
+  padding: 7px 10px; border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 7px; margin-top: 5px;
+  transition: border-color .12s, color .12s;
+}
+.new-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Main content ──────────────────────────────────────────────────────── */
+#main { flex: 1; overflow-y: auto; padding: 28px 28px 60px; }
+
+/* ── Screens ───────────────────────────────────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Page header ───────────────────────────────────────────────────────── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 26px; gap: 16px;
+}
+.page-title { font-family: var(--font-display); font-size: 36px; letter-spacing: 2px; line-height: 1; }
+.page-sub   { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.page-sub .highlight { color: var(--gold); }
+.page-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+/* ── Week cards (dashboard history) ───────────────────────────────────── */
+.week-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin-bottom: 32px;
+}
+
+.week-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 14px; cursor: pointer;
+  transition: border-color .12s;
+}
+.week-card:hover { border-color: var(--gold); }
+.week-card.new-card {
+  border-style: dashed; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; min-height: 100px; gap: 6px;
+}
+
+.week-num   { font-family: var(--font-display); font-size: 28px; line-height: 1; color: var(--gold); }
+.week-date  { font-size: 10px; color: var(--muted); margin: 4px 0 9px; letter-spacing: .5px; }
+.week-tags  { display: flex; gap: 4px; flex-wrap: wrap; }
+.week-acts  { display: flex; gap: 5px; margin-top: 10px; }
+
+/* ── Builder panels ────────────────────────────────────────────────────── */
+.panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden; margin-bottom: 14px;
+}
+.panel-header {
+  padding: 13px 18px; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title { font-family: var(--font-display); font-size: 18px; letter-spacing: 1px; }
+.panel-body  { padding: 16px 18px; }
+.panel-footer {
+  padding: 12px 18px; border-top: 1px solid var(--border);
+  background: var(--surface); display: flex; gap: 8px; justify-content: flex-end;
+}
+
+/* ── Week meta grid ────────────────────────────────────────────────────── */
+.week-meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 18px; }
+
+/* ── Day strip ─────────────────────────────────────────────────────────── */
+.day-strip { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+
+.day-pill {
+  border-radius: 4px; padding: 10px 5px; text-align: center;
+  border: 1px solid var(--border); cursor: pointer; transition: all .12s;
+  user-select: none;
+}
+.day-pill:hover  { border-color: var(--muted); }
+.day-pill.active { border-color: var(--gold); background: rgba(249,178,51,.08); }
+.day-pill.rest   { opacity: .4; }
+.day-pill-label  { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.day-pill-name   { font-family: var(--font-display); font-size: 12px; color: var(--gold); line-height: 1.2; }
+.day-pill.rest .day-pill-name { color: var(--muted); font-family: var(--font-body); font-size: 10px; }
+
+/* ── Exercise table ────────────────────────────────────────────────────── */
+.ex-table { width: 100%; border-collapse: collapse; }
+.ex-table thead tr { background: var(--surface); }
+.ex-table thead th {
+  padding: 7px 10px; font-size: 9px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--muted); text-align: left;
+}
+.ex-table tbody tr { border-top: 1px solid var(--border); transition: background .1s; }
+.ex-table tbody tr:hover { background: rgba(255,255,255,.02); }
+.ex-table td { padding: 9px 10px; font-size: 12px; vertical-align: middle; }
+
+.order-btns { display: flex; flex-direction: column; gap: 2px; }
+.order-btn  {
+  font-size: 9px; color: var(--muted); background: none; border: none;
+  cursor: pointer; padding: 1px 4px; line-height: 1; transition: color .1s;
+}
+.order-btn:hover { color: var(--text); }
+
+.code-input {
+  width: 44px !important; font-family: var(--font-display) !important;
+  font-size: 14px !important; text-align: center; padding: 4px 6px !important;
+  letter-spacing: 1px;
+}
+
+.sets-input { width: 48px !important; text-align: center; padding: 4px 6px !important; }
+.reps-input { width: 80px !important; padding: 4px 6px !important; }
+
+.img-thumb {
+  width: 36px; height: 36px; border-radius: 3px; object-fit: cover;
+  border: 1px solid var(--border);
+}
+.img-placeholder {
+  width: 36px; height: 36px; border: 1px dashed var(--border);
+  border-radius: 3px; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; font-size: 18px; color: var(--muted);
+  transition: border-color .12s, color .12s;
+}
+.img-placeholder:hover { border-color: var(--gold); color: var(--gold); }
+
+.add-ex-row {
+  padding: 10px 12px; border-top: 1px dashed var(--border); display: flex; gap: 7px; flex-wrap: wrap;
+}
+
+/* ── Volume grid ───────────────────────────────────────────────────────── */
+.vol-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 8px; margin-top: 10px;
+}
+.vol-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 10px 12px;
+}
+.vol-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 5px; }
+.vol-bar-wrap { height: 2px; background: var(--border); border-radius: 2px; margin-bottom: 6px; overflow: hidden; }
+.vol-bar   { height: 100%; border-radius: 2px; }
+.vol-num   { font-family: var(--font-display); font-size: 24px; line-height: 1; }
+.vol-sub   { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* ── Settings ──────────────────────────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.chip-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font-size: 10px; letter-spacing: .8px; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 3px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; transition: all .12s;
+}
+.chip.selected { background: rgba(249,178,51,.12); border-color: var(--gold); color: var(--gold); }
+.chip:hover    { border-color: var(--muted); color: var(--text); }
+
+/* ── Modal ─────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; width: 540px; max-width: 95vw;
+  max-height: 85vh; display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.modal-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 1px; }
+.modal-body  { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-footer {
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0;
+}
+
+/* ── Template cards (in modal) ─────────────────────────────────────────── */
+.tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tpl-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 13px; cursor: default;
+}
+.tpl-card:hover { border-color: var(--border); }
+.tpl-name { font-family: var(--font-display); font-size: 15px; letter-spacing: 1px; margin-bottom: 4px; }
+.tpl-meta { font-size: 10px; color: var(--muted); margin-bottom: 8px; letter-spacing: .5px; }
+
+/* ── Toast ─────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 20px;
+  font-size: 13px; color: var(--text);
+  transform: translateY(80px); opacity: 0;
+  transition: all .25s; pointer-events: none;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.success { border-color: var(--success); }
+#toast.error   { border-color: var(--danger); }
+
+/* ── Status dot ─────────────────────────────────────────────────────────── */
+.status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.status-draft { background: var(--gold); }
+.status-final { background: var(--success); }
+
+/* ── PDF Preview iframe ──────────────────────────────────────────────────── */
+#pdf-preview-modal .modal { width: 880px; max-width: 97vw; height: 90vh; }
+#pdf-preview-modal iframe { width: 100%; height: 100%; border: none; flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ───────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <div id="logo">
+    <svg width="20" height="16" viewBox="0 0 20 16" fill="none" aria-label="Rockson Performance logo">
+      <polygon points="10,1 19,15 1,15" fill="#f9b233" opacity="0.2" stroke="#f9b233" stroke-width="1"/>
+      <polygon points="10,4 13,10 7,10" fill="#f9b233"/>
+      <line x1="5" y1="11" x2="2" y2="15" stroke="#f9b233" stroke-width="1.4"/>
+    </svg>
+    ROCKSON <span>PERFORMANCE</span>
+    <span style="font-family:var(--font-body);font-size:11px;color:var(--muted);letter-spacing:1px;margin-left:4px">— Schedule App</span>
+  </div>
+  <div id="nav">
+    <button class="nav-btn active" onclick="showScreen('dashboard')">Dashboard</button>
+    <button class="nav-btn"        onclick="showScreen('builder')">Builder</button>
+    <button class="nav-btn"        onclick="showScreen('settings')">Settings</button>
+  </div>
+  <div style="width:180px"></div><!-- spacer to center nav -->
+</div>
+
+<!-- ── APP BODY ──────────────────────────────────────────────────────────── -->
+<div id="app-body">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-section">
+      <div class="label-upper" style="margin-bottom:10px;padding:0 4px">Clients</div>
+      <div id="client-list"></div>
+      <button class="new-btn" onclick="openNewClientModal()">
+        <span style="font-size:16px;line-height:1">+</span> New client
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- ── DASHBOARD SCREEN ───────────────────────────────────────────── -->
+    <div id="screen-dashboard" class="screen active">
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="dash-client-name">Select a client</div>
+          <div class="page-sub" id="dash-client-sub"></div>
+        </div>
+        <div class="page-actions" id="dash-actions" style="display:none">
+          <button class="btn btn-sm" onclick="openDuplicateModal()">Duplicate schedule</button>
+          <button class="btn btn-primary btn-sm" onclick="openNewScheduleModal()">+ New schedule</button>
+        </div>
+      </div>
+      <div id="dash-empty" style="color:var(--muted);font-size:14px;margin-top:40px;text-align:center">
+        Select a client from the sidebar to view their schedules.
+      </div>
+      <div id="dash-content" class="hidden">
+        <div class="section-heading">Schedule history</div>
+        <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── BUILDER SCREEN ────────────────────────────────────────────── -->
+    <div id="screen-builder" class="screen">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Schedule Builder</div>
+          <div class="page-sub" id="builder-sub"></div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-sm" onclick="openTemplateModal()">Load template</button>
+          <button class="btn btn-sm" onclick="saveSchedule()">Save</button>
+          <button class="btn btn-sm" onclick="previewPDF()">Preview PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="exportPDF()">Export PDF</button>
+        </div>
+      </div>
+
+      <!-- Week definition -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Week definition</div>
+          <span id="builder-status-badge" style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">
+            <span class="status-dot status-draft"></span>Draft
+          </span>
+        </div>
+        <div class="panel-body">
+          <div class="week-meta">
+            <div class="field">
+              <label>Week number</label>
+              <input type="number" id="wk-number" min="1" max="52" value="1" onchange="onWeekMetaChange()">
+            </div>
+            <div class="field">
+              <label>Start date</label>
+              <input type="date" id="wk-start" onchange="saveWeekMeta()">
+            </div>
+            <div class="field">
+              <label>End date</label>
+              <input type="date" id="wk-end" onchange="saveWeekMeta()">
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:8px">
+            <label>Training days — click to toggle</label>
+          </div>
+          <div class="day-strip" id="day-strip"></div>
+        </div>
+      </div>
+
+      <!-- Day panels injected here -->
+      <div id="day-panels"></div>
+
+      <!-- Weekly volume -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Weekly volume</div></div>
+        <div class="panel-body">
+          <div class="vol-grid" id="vol-grid">
+            <div style="color:var(--muted);font-size:13px">Add exercises to see volume.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Builder footer -->
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-sm" onclick="showScreen('dashboard')">Cancel</button>
+        <button class="btn btn-sm" onclick="saveSchedule()">Save draft</button>
+        <button class="btn btn-sm" onclick="previewPDF()">Preview PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="finalizeAndExport()">Finalize & Export PDF</button>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS SCREEN ────────────────────────────────────────────── -->
+    <div id="screen-settings" class="screen">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-sub">Muscle groups, default exercises & branding</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save settings</button>
+      </div>
+
+      <div class="settings-grid">
+
+        <!-- Branding -->
+        <div class="panel" style="margin-bottom:0">
+          <div class="panel-header"><div class="panel-title">Branding</div></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="field">
+              <label>PT / Studio name</label>
+              <input type="text" id="set-pt-name" placeholder="Rockson Performance">
+            </div>
+            <div class="field">
+              <label>Logo</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <img id="set-logo-preview" src="" alt="Logo" style="width:52px;height:52px;object-fit:contain;background:var(--surface);border:1px solid var(--border);border-radius:3px;display:none">
+                <div id="set-logo-placeholder" style="width:52px;height:52px;background:var(--surface);border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);letter-spacing:1px">LOGO</div>
+                <input type="file" id="set-logo-file" accept="image/*" style="display:none" onchange="uploadLogo()">
+                <button class="btn btn-sm" onclick="document.getElementById('set-logo-file').click()">Upload</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Muscle groups -->
+        <div class="panel" style="margin-bottom:0">
+          <div class="panel-header">
+            <div class="panel-title">Muscle groups</div>
+            <button class="btn btn-sm" onclick="openAddMuscleGroupModal()">+ Add</button>
+          </div>
+          <div class="panel-body">
+            <div class="chip-grid" id="muscle-group-chips"></div>
+          </div>
+        </div>
+
+        <!-- Default exercises -->
+        <div class="panel" style="grid-column:1/-1;margin-bottom:0">
+          <div class="panel-header">
+            <div class="panel-title">Exercise library</div>
+            <button class="btn btn-sm" onclick="openAddExerciseModal()">+ Add exercise</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <table class="ex-table">
+              <thead><tr>
+                <th>Exercise</th>
+                <th>Muscle group</th>
+                <th style="width:70px">Def. sets</th>
+                <th style="width:90px">Def. reps</th>
+                <th style="width:60px">Photo</th>
+                <th style="width:60px"></th>
+              </tr></thead>
+              <tbody id="exercise-library-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app-body -->
+
+<!-- ── TOAST ─────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── MODALS ─────────────────────────────────────────────────────────────── -->
+
+<!-- New client -->
+<div class="modal-overlay hidden" id="modal-new-client">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <div class="modal-title">New client</div>
+      <button class="icon-btn" onclick="closeModal('modal-new-client')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>Full name</label><input type="text" id="new-client-name" placeholder="e.g. Justin Simons"></div>
+      <div class="field"><label>Notes (optional)</label><textarea id="new-client-notes" placeholder="Goals, program type…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-new-client')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createClient()">Create client</button>
+    </div>
+  </div>
+</div>
+
+<!-- New schedule -->
+<div class="modal-overlay hidden" id="modal-new-schedule">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <div class="modal-title">New schedule</div>
+      <button class="icon-btn" onclick="closeModal('modal-new-schedule')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>Week number</label><input type="number" id="ns-week" min="1" max="52" value="1"></div>
+      <div class="field"><label>Year</label><input type="number" id="ns-year" min="2020" max="2099"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-new-schedule')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createSchedule()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate schedule -->
+<div class="modal-overlay hidden" id="modal-duplicate">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Duplicate schedule</div>
+      <button class="icon-btn" onclick="closeModal('modal-duplicate')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:13px;color:var(--muted)">Choose a source schedule and the target week. The original will not be modified.</div>
+      <div class="field">
+        <label>Source schedule</label>
+        <select id="dup-source"></select>
+      </div>
+      <div class="field"><label>Target week number</label><input type="number" id="dup-week" min="1" max="52"></div>
+      <div class="field"><label>Year</label><input type="number" id="dup-year" min="2020" max="2099"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-duplicate')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="duplicateSchedule()">Duplicate & edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template modal -->
+<div class="modal-overlay hidden" id="modal-template">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Load from template</div>
+      <button class="icon-btn" onclick="closeModal('modal-template')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
+        Choose a starting point. The current schedule content will be replaced.
+      </div>
+      <div class="section-heading">Client's previous schedules</div>
+      <div class="tpl-grid" id="tpl-client-schedules" style="margin-bottom:20px"></div>
+      <div class="section-heading">Saved templates</div>
+      <div class="tpl-grid" id="tpl-global" style="margin-bottom:16px"></div>
+      <div style="margin-top:4px">
+        <button class="new-btn" style="width:auto;display:inline-flex" onclick="openSaveAsTemplateModal()">
+          <span style="font-size:15px">+</span> Save current as template
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-template')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add exercise to day -->
+<div class="modal-overlay hidden" id="modal-add-exercise">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add exercise</div>
+      <button class="icon-btn" onclick="closeModal('modal-add-exercise')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="ae-day-id">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm active" id="ae-tab-lib" onclick="switchAddTab('library')">From library</button>
+        <button class="btn btn-sm"        id="ae-tab-own" onclick="switchAddTab('custom')">Custom</button>
+      </div>
+      <div id="ae-library-section">
+        <div class="field" style="margin-bottom:10px">
+          <label>Filter by muscle group</label>
+          <select id="ae-filter-mg" onchange="renderLibraryList()">
+            <option value="">All muscle groups</option>
+          </select>
+        </div>
+        <div id="ae-library-list" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)"></div>
+      </div>
+      <div id="ae-custom-section" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label>Exercise name</label><input type="text" id="ae-custom-name" placeholder="e.g. Cable Fly"></div>
+        <div class="field">
+          <label>Muscle group</label>
+          <select id="ae-custom-mg">
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field"><label>Sets</label><input type="number" id="ae-custom-sets" min="1" max="20"></div>
+          <div class="field"><label>Reps</label><input type="text" id="ae-custom-reps" placeholder="8-10"></div>
+        </div>
+        <div class="field"><label>Set code (e.g. A1)</label><input type="text" id="ae-custom-code" placeholder="A1" style="width:80px"></div>
+        <div class="field"><label>Warmup?</label>
+          <select id="ae-custom-warmup"><option value="0">No</option><option value="1">Yes</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-add-exercise')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="ae-confirm-btn" onclick="confirmAddExercise()">Add exercise</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add muscle group -->
+<div class="modal-overlay hidden" id="modal-add-mg">
+  <div class="modal" style="width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Add muscle group</div>
+      <button class="icon-btn" onclick="closeModal('modal-add-mg')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>Name</label><input type="text" id="mg-name" placeholder="e.g. Forearms"></div>
+      <div class="field"><label>Color</label><input type="color" id="mg-color" value="#f9b233" style="height:38px;padding:3px 6px;cursor:pointer"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-add-mg')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createMuscleGroup()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add exercise to library -->
+<div class="modal-overlay hidden" id="modal-add-ex-lib">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Add exercise to library</div>
+      <button class="icon-btn" onclick="closeModal('modal-add-ex-lib')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>Exercise name</label><input type="text" id="lib-ex-name" placeholder="e.g. Cable Fly"></div>
+      <div class="field"><label>Muscle group</label><select id="lib-ex-mg"><option value="">— select —</option></select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Default sets</label><input type="number" id="lib-ex-sets" min="1" max="20"></div>
+        <div class="field"><label>Default reps</label><input type="text" id="lib-ex-reps" placeholder="8-10"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-add-ex-lib')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createLibraryExercise()">Add to library</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save as template -->
+<div class="modal-overlay hidden" id="modal-save-template">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <div class="modal-title">Save as template</div>
+      <button class="icon-btn" onclick="closeModal('modal-save-template')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>Template name</label><input type="text" id="tpl-name" placeholder="e.g. Fullbody Hypertrophy"></div>
+      <div class="field"><label>Description</label><input type="text" id="tpl-desc" placeholder="Short description…"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('modal-save-template')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAsTemplate()">Save template</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF preview -->
+<div class="modal-overlay hidden" id="pdf-preview-modal">
+  <div class="modal" style="width:880px;max-width:97vw;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <div class="modal-title">PDF Preview</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" id="pdf-mode-dark"  onclick="setPDFMode('dark')">Dark</button>
+        <button class="btn btn-sm" id="pdf-mode-light" onclick="setPDFMode('light')">Light</button>
+        <button class="btn btn-primary btn-sm" onclick="exportPDF()">Export PDF</button>
+        <button class="icon-btn" onclick="closeModal('pdf-preview-modal')">✕</button>
+      </div>
+    </div>
+    <iframe id="pdf-iframe" style="flex:1;border:none;width:100%"></iframe>
+  </div>
+</div>
+
+<!-- ── JAVASCRIPT ──────────────────────────────────────────────────────────── -->
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  clients:       [],
+  muscleGroups:  [],
+  exercises:     [],
+  templates:     [],
+  settings:      {},
+  activeClient:  null,
+  clientSchedules: [],
+  activeSchedule: null,   // full schedule object with days
+  pdfMode:       'dark',
+};
+
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+async function boot() {
+  await Promise.all([
+    loadClients(),
+    loadMuscleGroups(),
+    loadExercises(),
+    loadTemplates(),
+    loadSettings(),
+  ]);
+  renderSidebar();
+  renderSettingsScreen();
+}
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch('/api' + path, opts);
+  if (!res.ok) {
+    const msg = await res.text().catch(() => res.statusText);
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get('Content-Type') || '';
+  return ct.includes('json') ? res.json() : res.text();
+}
+
+async function loadClients()      { state.clients      = await api('GET', '/clients'); }
+async function loadMuscleGroups() { state.muscleGroups  = await api('GET', '/muscle-groups'); }
+async function loadExercises()    { state.exercises     = await api('GET', '/exercises'); }
+async function loadTemplates()    { state.templates     = await api('GET', '/templates'); }
+async function loadSettings()     { state.settings      = await api('GET', '/settings'); }
+
+// ── Screen routing ─────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const idx = { dashboard: 0, builder: 1, settings: 2 }[name];
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2800);
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('client-list');
+  list.innerHTML = state.clients.map(c => {
+    const lastWeek = state.activeClient?.id === c.id && state.clientSchedules.length
+      ? `WK ${state.clientSchedules[0].week_number}` : '';
+    const active   = state.activeClient?.id === c.id ? 'active' : '';
+    return `<button class="client-btn ${active}" onclick="selectClient(${c.id})">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span>
+      ${lastWeek ? `<span class="client-badge">${lastWeek}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+// ── Client selection ───────────────────────────────────────────────────────
+async function selectClient(cid) {
+  state.activeClient = state.clients.find(c => c.id === cid);
+  state.clientSchedules = await api('GET', `/clients/${cid}/schedules`);
+  renderSidebar();
+  renderDashboard();
+  showScreen('dashboard');
+}
+
+function renderDashboard() {
+  const c = state.activeClient;
+  if (!c) return;
+
+  document.getElementById('dash-client-name').textContent = c.name;
+  document.getElementById('dash-client-sub').innerHTML =
+    `<span class="highlight">${state.clientSchedules.length} schedule${state.clientSchedules.length !== 1 ? 's' : ''}</span>`;
+  document.getElementById('dash-actions').style.display = 'flex';
+  document.getElementById('dash-empty').classList.add('hidden');
+  document.getElementById('dash-content').classList.remove('hidden');
+
+  const grid = document.getElementById('week-grid');
+  const cards = state.clientSchedules.map(s => `
+    <div class="week-card" onclick="openSchedule(${s.id})">
+      <div class="week-num">${s.week_number}</div>
+      <div class="week-date">${formatDate(s.date_start)} – ${formatDate(s.date_end)}</div>
+      <div class="week-tags">
+        <span class="tag">Week ${s.week_number}</span>
+        <span class="tag ${s.status === 'final' ? '' : 'draft-tag'}" style="${s.status === 'final' ? 'border-color:var(--success);color:var(--success);background:rgba(76,175,80,.1)' : ''}">${s.status}</span>
+      </div>
+      <div class="week-acts">
+        <button class="btn btn-xs" onclick="event.stopPropagation();openSchedule(${s.id})">Edit</button>
+        <button class="btn btn-xs" onclick="event.stopPropagation();triggerPDFExport(${s.id})">PDF</button>
+        <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteSchedule(${s.id})">Delete</button>
+      </div>
+    </div>`).join('');
+
+  grid.innerHTML = cards + `
+    <div class="week-card new-card" onclick="openNewScheduleModal()">
+      <div style="font-size:28px;color:var(--muted)">+</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">New schedule</div>
+    </div>`;
+}
+
+// ── Schedule open & builder ────────────────────────────────────────────────
+async function openSchedule(sid) {
+  try {
+    state.activeSchedule = await api('GET', `/schedules/${sid}`);
+    renderBuilder();
+    showScreen('builder');
+  } catch(e) { toast('Could not load schedule', 'error'); }
+}
+
+function renderBuilder() {
+  const s = state.activeSchedule;
+  if (!s) return;
+
+  const c = state.activeClient;
+  document.getElementById('builder-sub').innerHTML =
+    `${esc(c?.name || '')} · <span class="highlight">Week ${s.week_number}</span> · ${formatDate(s.date_start)} – ${formatDate(s.date_end)}`;
+
+  const badge = document.getElementById('builder-status-badge');
+  badge.innerHTML = `<span class="status-dot status-${s.status}"></span>${cap(s.status)}`;
+
+  document.getElementById('wk-number').value = s.week_number;
+  document.getElementById('wk-start').value  = s.date_start || '';
+  document.getElementById('wk-end').value    = s.date_end   || '';
+
+  renderDayStrip();
+  renderDayPanels();
+  renderVolume();
+}
+
+function renderDayStrip() {
+  const s   = state.activeSchedule;
+  const strip = document.getElementById('day-strip');
+  const activeDows = new Set((s.days || []).map(d => d.day_of_week));
+
+  strip.innerHTML = DOW.map((name, i) => {
+    const isActive = activeDows.has(i);
+    const dayObj   = (s.days || []).find(d => d.day_of_week === i);
+    return `<div class="day-pill ${isActive ? 'active' : 'rest'}" onclick="toggleDay(${i})" title="${isActive ? 'Click to remove day' : 'Click to add day'}">
+      <div class="day-pill-label">${name}</div>
+      <div class="day-pill-name">${isActive ? esc(dayObj?.day_label || `Day`) : 'Rest'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleDay(dow) {
+  const s   = state.activeSchedule;
+  const idx = (s.days || []).findIndex(d => d.day_of_week === dow);
+  if (idx >= 0) {
+    // Remove day
+    const dayId = s.days[idx].id;
+    await api('DELETE', `/days/${dayId}`);
+    s.days.splice(idx, 1);
+  } else {
+    // Add day
+    const dayLabel = `Day ${(s.days || []).length + 1}`;
+    const res = await api('POST', `/schedules/${s.id}/days`, {
+      day_of_week: dow,
+      day_label:   dayLabel,
+      sort_order:  dow,
+    });
+    s.days = s.days || [];
+    s.days.push({ id: res.id, day_of_week: dow, day_label: dayLabel, sort_order: dow, exercises: [], muscle_groups: [] });
+    s.days.sort((a, b) => a.day_of_week - b.day_of_week);
+  }
+  renderDayStrip();
+  renderDayPanels();
+  renderVolume();
+}
+
+function renderDayPanels() {
+  const container = document.getElementById('day-panels');
+  const days = (state.activeSchedule?.days || []).sort((a,b) => a.day_of_week - b.day_of_week);
+
+  container.innerHTML = days.map(day => renderDayPanel(day)).join('');
+
+  // Attach inline save listeners
+  container.querySelectorAll('[data-autosave]').forEach(el => {
+    el.addEventListener('change', () => autoSaveExercise(el));
+  });
+}
+
+function renderDayPanel(day) {
+  const mgNames = (day.muscle_groups || []).map(mg => mg.name).join(' · ') || 'No muscle groups set';
+
+  const exRows = (day.exercises || []).map((ex, idx) => renderExerciseRow(ex, day.id, idx, day.exercises.length)).join('');
+
+  return `
+  <div class="panel" id="day-panel-${day.id}">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">${esc(day.day_label || `Day`)} — ${DOW[day.day_of_week] || ''}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(mgNames)}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-sm" onclick="openMuscleGroupPicker(${day.id})">Edit muscle groups</button>
+        <button class="btn btn-sm" onclick="openAddExerciseModal(${day.id})">+ Exercise</button>
+        <input type="text" value="${esc(day.day_label || '')}" placeholder="Label (e.g. Day 1)"
+          style="width:120px;font-size:11px;padding:5px 8px"
+          onchange="saveDayLabel(${day.id}, this.value)">
+      </div>
+    </div>
+    <div style="padding:0">
+      <table class="ex-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th style="width:52px">Code</th>
+          <th>Exercise</th>
+          <th style="width:60px">Sets</th>
+          <th style="width:100px">Reps</th>
+          <th style="width:50px">Photo</th>
+          <th style="width:200px">Notes</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ex-tbody-${day.id}">
+          ${exRows || `<tr><td colspan="8" style="padding:14px;color:var(--muted);text-align:center;font-size:12px">No exercises yet — add one below.</td></tr>`}
+        </tbody>
+      </table>
+      <div class="add-ex-row">
+        <button class="btn btn-sm" onclick="openAddExerciseModal(${day.id}, 'library')">+ From library</button>
+        <button class="btn btn-sm" onclick="openAddExerciseModal(${day.id}, 'custom')">+ Custom exercise</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderExerciseRow(ex, dayId, idx, total) {
+  const mgColor  = ex.muscle_group_color || '#f9b233';
+  const mgName   = ex.muscle_group_name  || '';
+  const dispName = ex.custom_name || ex.library_name || '—';
+  const imgHtml  = ex.image_filename
+    ? `<img src="/static/images/exercises/${esc(ex.image_filename)}" class="img-thumb" alt="">`
+    : `<div class="img-placeholder" onclick="uploadExerciseImage(${ex.id})" title="Upload image">+</div>`;
+
+  const warmupStyle = ex.is_warmup ? 'background:rgba(185,246,202,0.05);' : '';
+
+  return `<tr id="ex-row-${ex.id}" style="${warmupStyle}">
+    <td>
+      <div class="order-btns">
+        <button class="order-btn" onclick="moveExercise(${dayId},${ex.id},-1)" ${idx===0?'disabled':''}>▲</button>
+        <button class="order-btn" onclick="moveExercise(${dayId},${ex.id},1)"  ${idx===total-1?'disabled':''}>▼</button>
+      </div>
+    </td>
+    <td>
+      <input class="code-input" type="text" value="${esc(ex.set_code||'')}"
+        placeholder="A1"
+        data-autosave data-exid="${ex.id}" data-field="set_code">
+    </td>
+    <td>
+      <div style="font-size:13px;font-weight:500">${esc(dispName)}</div>
+      ${mgName ? `<span class="muscle-pill" style="background:${mgColor}22;color:${mgColor}">${esc(mgName)}</span>` : ''}
+      ${ex.is_warmup ? `<span class="tag" style="background:rgba(185,246,202,.15);color:#b9f6ca;margin-left:4px">warmup</span>` : ''}
+    </td>
+    <td>
+      <input class="sets-input" type="number" min="1" max="20" value="${ex.sets||''}"
+        data-autosave data-exid="${ex.id}" data-field="sets">
+    </td>
+    <td>
+      <input class="reps-input" type="text" value="${esc(ex.reps||'')}" placeholder="8-10"
+        data-autosave data-exid="${ex.id}" data-field="reps">
+    </td>
+    <td>${imgHtml}</td>
+    <td>
+      <input type="text" value="${esc(ex.notes||'')}" placeholder="Notes…"
+        style="font-size:11px;padding:5px 8px"
+        data-autosave data-exid="${ex.id}" data-field="notes">
+    </td>
+    <td>
+      <button class="icon-btn btn-danger" title="Remove" onclick="removeExercise(${dayId},${ex.id})" style="color:var(--muted)">✕</button>
+    </td>
+  </tr>`;
+}
+
+// ── Auto-save exercise fields ──────────────────────────────────────────────
+const saveTimers = {};
+function autoSaveExercise(el) {
+  const exId  = el.dataset.exid;
+  const field = el.dataset.field;
+  clearTimeout(saveTimers[exId]);
+  saveTimers[exId] = setTimeout(async () => {
+    // Build current values from all inputs for this exercise
+    const row  = document.getElementById(`ex-row-${exId}`);
+    if (!row) return;
+    const data = {
+      set_code: row.querySelector('[data-field="set_code"]')?.value || '',
+      sets:     parseInt(row.querySelector('[data-field="sets"]')?.value) || null,
+      reps:     row.querySelector('[data-field="reps"]')?.value || '',
+      notes:    row.querySelector('[data-field="notes"]')?.value || '',
+    };
+    try {
+      await api('PUT', `/exercises/day/${exId}`, data);
+      updateVolumeFromState();
+    } catch(e) { toast('Auto-save failed', 'error'); }
+  }, 600);
+}
+
+// ── Move exercise up/down ──────────────────────────────────────────────────
+async function moveExercise(dayId, exId, direction) {
+  const day = state.activeSchedule.days.find(d => d.id === dayId);
+  if (!day) return;
+  const idx = day.exercises.findIndex(e => e.id === exId);
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= day.exercises.length) return;
+  [day.exercises[idx], day.exercises[newIdx]] = [day.exercises[newIdx], day.exercises[idx]];
+  day.exercises.forEach((e,i) => e.sort_order = i);
+  await api('PUT', `/days/${dayId}/exercises/reorder`, { ids: day.exercises.map(e => e.id) });
+  document.getElementById(`ex-tbody-${dayId}`).innerHTML =
+    day.exercises.map((ex, i) => renderExerciseRow(ex, dayId, i, day.exercises.length)).join('');
+  // Re-attach listeners
+  document.querySelectorAll('[data-autosave]').forEach(el => {
+    el.addEventListener('change', () => autoSaveExercise(el));
+  });
+}
+
+// ── Remove exercise ────────────────────────────────────────────────────────
+async function removeExercise(dayId, exId) {
+  if (!confirm('Remove this exercise?')) return;
+  await api('DELETE', `/exercises/day/${exId}`);
+  const day = state.activeSchedule.days.find(d => d.id === dayId);
+  if (day) day.exercises = day.exercises.filter(e => e.id !== exId);
+  const row = document.getElementById(`ex-row-${exId}`);
+  if (row) row.remove();
+  const tbody = document.getElementById(`ex-tbody-${dayId}`);
+  if (tbody && !tbody.querySelector('tr')) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:14px;color:var(--muted);text-align:center;font-size:12px">No exercises yet.</td></tr>`;
+  }
+  renderVolume();
+}
+
+// ── Day label save ─────────────────────────────────────────────────────────
+async function saveDayLabel(dayId, label) {
+  const day = state.activeSchedule.days.find(d => d.id === dayId);
+  if (!day) return;
+  day.day_label = label;
+  await api('PUT', `/days/${dayId}`, { day_of_week: day.day_of_week, day_label: label, sort_order: day.sort_order });
+  renderDayStrip();
+}
+
+// ── Week meta save ─────────────────────────────────────────────────────────
+async function saveWeekMeta() {
+  const s = state.activeSchedule;
+  if (!s) return;
+  s.week_number = parseInt(document.getElementById('wk-number').value) || s.week_number;
+  s.date_start  = document.getElementById('wk-start').value;
+  s.date_end    = document.getElementById('wk-end').value;
+  await api('PUT', `/schedules/${s.id}`, s);
+}
+
+async function onWeekMetaChange() {
+  const wk   = parseInt(document.getElementById('wk-number').value);
+  const year = new Date().getFullYear();
+  // Auto-fill dates
+  try {
+    const jan4 = new Date(year, 0, 4);
+    const mon  = new Date(jan4);
+    mon.setDate(jan4.getDate() - ((jan4.getDay() || 7) - 1) + (wk - 1) * 7);
+    const sun  = new Date(mon); sun.setDate(mon.getDate() + 6);
+    document.getElementById('wk-start').value = mon.toISOString().slice(0, 10);
+    document.getElementById('wk-end').value   = sun.toISOString().slice(0, 10);
+  } catch(e) {}
+  await saveWeekMeta();
+}
+
+// ── Volume calculation ─────────────────────────────────────────────────────
+function renderVolume() {
+  const mgMap = {};
+  (state.activeSchedule?.days || []).forEach(day => {
+    (day.exercises || []).forEach(ex => {
+      if (ex.is_warmup) return;
+      const sets  = parseInt(ex.sets) || 0;
+      const mgId  = ex.muscle_group_id;
+      const mgName  = ex.muscle_group_name;
+      const mgColor = ex.muscle_group_color;
+      if (!mgId || !sets) return;
+      if (!mgMap[mgId]) mgMap[mgId] = { name: mgName, color: mgColor, sets: 0 };
+      mgMap[mgId].sets += sets;
+    });
+  });
+
+  const entries  = Object.values(mgMap);
+  const maxSets  = Math.max(...entries.map(e => e.sets), 1);
+  const volGrid  = document.getElementById('vol-grid');
+
+  if (!entries.length) {
+    volGrid.innerHTML = '<div style="color:var(--muted);font-size:13px">Add exercises to see volume.</div>';
+    return;
+  }
+
+  volGrid.innerHTML = entries.sort((a,b) => b.sets - a.sets).map(e => `
+    <div class="vol-item">
+      <div class="vol-label">${esc(e.name)}</div>
+      <div class="vol-bar-wrap"><div class="vol-bar" style="width:${Math.round(e.sets/maxSets*100)}%;background:${e.color||'var(--gold)'}"></div></div>
+      <div class="vol-num" style="color:${e.color||'var(--gold)'}">${e.sets}</div>
+      <div class="vol-sub">sets / week</div>
+    </div>`).join('');
+}
+
+function updateVolumeFromState() {
+  // Re-read sets values from DOM and push to state, then re-render volume
+  (state.activeSchedule?.days || []).forEach(day => {
+    (day.exercises || []).forEach(ex => {
+      const setsEl = document.querySelector(`#ex-row-${ex.id} [data-field="sets"]`);
+      if (setsEl) ex.sets = parseInt(setsEl.value) || 0;
+    });
+  });
+  renderVolume();
+}
+
+// ── Muscle group picker for a day ──────────────────────────────────────────
+function openMuscleGroupPicker(dayId) {
+  const day = state.activeSchedule.days.find(d => d.id === dayId);
+  if (!day) return;
+
+  const selected = new Set((day.muscle_groups || []).map(mg => mg.id));
+  const html = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="mg-picker-chips">
+      ${state.muscleGroups.map(mg => `
+        <div class="chip ${selected.has(mg.id) ? 'selected' : ''}"
+          style="${selected.has(mg.id) ? `border-color:${mg.color};color:${mg.color};background:${mg.color}22` : ''}"
+          onclick="toggleMGChip(this, ${mg.id}, '${mg.name}', '${mg.color}')">${esc(mg.name)}</div>
+      `).join('')}
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+      <button class="btn btn-sm" onclick="document.getElementById('mg-picker-modal').remove()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMGPicker(${dayId})">Save</button>
+    </div>`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'mg-picker-modal';
+  overlay.innerHTML = `<div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Muscle groups — ${esc(day.day_label||'Day')}</div>
+      <button class="icon-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+    </div>
+    <div class="modal-body">${html}</div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function toggleMGChip(el, id, name, color) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    el.style.cssText = `border-color:${color};color:${color};background:${color}22`;
+  } else {
+    el.style.cssText = '';
+  }
+}
+
+async function saveMGPicker(dayId) {
+  const chips = document.querySelectorAll('#mg-picker-chips .chip.selected');
+  const ids   = [...chips].map(c => {
+    const idx = [...c.parentElement.children].indexOf(c);
+    return state.muscleGroups[idx].id;
+  });
+  await api('PUT', `/days/${dayId}/muscle-groups`, { muscle_group_ids: ids });
+
+  const day = state.activeSchedule.days.find(d => d.id === dayId);
+  if (day) day.muscle_groups = ids.map(id => state.muscleGroups.find(mg => mg.id === id)).filter(Boolean);
+
+  document.getElementById('mg-picker-modal')?.remove();
+  renderDayPanels();
+}
+
+// ── Add exercise modal ─────────────────────────────────────────────────────
+function openAddExerciseModal(dayId, tab = 'library') {
+  document.getElementById('ae-day-id').value = dayId;
+  switchAddTab(tab);
+
+  // Populate filter dropdown
+  const mgSel = document.getElementById('ae-filter-mg');
+  mgSel.innerHTML = '<option value="">All muscle groups</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+
+  const mgCustom = document.getElementById('ae-custom-mg');
+  mgCustom.innerHTML = '<option value="">— select —</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+
+  renderLibraryList();
+  openModal('modal-add-exercise');
+}
+
+function switchAddTab(tab) {
+  const isLib = (tab === 'library');
+  document.getElementById('ae-library-section').classList.toggle('hidden', !isLib);
+  document.getElementById('ae-custom-section').classList.toggle('hidden', isLib);
+  document.getElementById('ae-tab-lib').classList.toggle('active', isLib);
+  document.getElementById('ae-tab-own').classList.toggle('active', !isLib);
+  document.getElementById('ae-tab-lib').style.borderColor = isLib ? 'var(--gold)' : '';
+  document.getElementById('ae-tab-lib').style.color = isLib ? 'var(--gold)' : '';
+  document.getElementById('ae-tab-own').style.borderColor = !isLib ? 'var(--gold)' : '';
+  document.getElementById('ae-tab-own').style.color = !isLib ? 'var(--gold)' : '';
+}
+
+function renderLibraryList() {
+  const filterMg = parseInt(document.getElementById('ae-filter-mg').value) || null;
+  const list     = document.getElementById('ae-library-list');
+  const filtered = state.exercises.filter(e => !filterMg || e.muscle_group_id === filterMg);
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:12px">No exercises found.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(ex => `
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);
+        display:flex;align-items:center;justify-content:space-between;
+        cursor:pointer;transition:background .1s"
+      onmouseover="this.style.background='var(--card)'"
+      onmouseout="this.style.background=''"
+      onclick="quickAddLibraryExercise(${ex.id})">
+      <div>
+        <div style="font-size:13px;font-weight:500">${esc(ex.name)}</div>
+        <div>
+          <span class="muscle-pill" style="background:${ex.muscle_group_color||'var(--gold)'}22;color:${ex.muscle_group_color||'var(--gold)'}">${esc(ex.muscle_group_name||'')}</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:6px">${ex.default_sets||''}×${ex.default_reps||''}</span>
+        </div>
+      </div>
+      <button class="btn btn-xs">Add</button>
+    </div>`).join('');
+}
+
+async function quickAddLibraryExercise(exId) {
+  const dayId = parseInt(document.getElementById('ae-day-id').value);
+  await addExerciseToDay(dayId, { exercise_id: exId });
+  closeModal('modal-add-exercise');
+}
+
+async function confirmAddExercise() {
+  const dayId   = parseInt(document.getElementById('ae-day-id').value);
+  const isLib   = !document.getElementById('ae-library-section').classList.contains('hidden');
+  if (isLib) {
+    // Handled by clicking in the list
+    toast('Click an exercise from the list to add it', 'success');
+    return;
+  }
+  const data = {
+    custom_name:     document.getElementById('ae-custom-name').value.trim(),
+    muscle_group_id: parseInt(document.getElementById('ae-custom-mg').value) || null,
+    sets:            parseInt(document.getElementById('ae-custom-sets').value) || null,
+    reps:            document.getElementById('ae-custom-reps').value.trim(),
+    set_code:        document.getElementById('ae-custom-code').value.trim(),
+    is_warmup:       parseInt(document.getElementById('ae-custom-warmup').value) || 0,
+  };
+  if (!data.custom_name) { toast('Exercise name required', 'error'); return; }
+  await addExerciseToDay(dayId, data);
+  closeModal('modal-add-exercise');
+}
+
+async function addExerciseToDay(dayId, data) {
+  try {
+    const res = await api('POST', `/days/${dayId}/exercises`, data);
+    // Reload exercise with full data
+    const ex = data.exercise_id
+      ? { ...data, id: res.id, ...resolveExercise(data.exercise_id) }
+      : { ...data, id: res.id };
+    const day = state.activeSchedule.days.find(d => d.id === dayId);
+    if (day) {
+      ex.sort_order = day.exercises.length;
+      day.exercises.push(ex);
+    }
+    // Re-render just this day's tbody
+    const tbody = document.getElementById(`ex-tbody-${dayId}`);
+    if (tbody && day) {
+      tbody.innerHTML = day.exercises.map((e,i) => renderExerciseRow(e, dayId, i, day.exercises.length)).join('');
+      tbody.querySelectorAll('[data-autosave]').forEach(el => el.addEventListener('change', () => autoSaveExercise(el)));
+    }
+    renderVolume();
+    toast('Exercise added');
+  } catch(e) { toast('Failed to add exercise', 'error'); }
+}
+
+function resolveExercise(exId) {
+  const ex = state.exercises.find(e => e.id === exId);
+  if (!ex) return {};
+  return {
+    library_name:       ex.name,
+    muscle_group_id:    ex.muscle_group_id,
+    muscle_group_name:  ex.muscle_group_name,
+    muscle_group_color: ex.muscle_group_color,
+    sets:               ex.default_sets,
+    reps:               ex.default_reps,
+  };
+}
+
+// ── Upload exercise image ──────────────────────────────────────────────────
+async function uploadExerciseImage(dexId) {
+  const input = document.createElement('input');
+  input.type  = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const res = await fetch(`/api/exercises/day/${dexId}/image`, { method: 'POST', body: fd });
+    if (res.ok) {
+      const data = await res.json();
+      const placeholder = document.querySelector(`#ex-row-${dexId} .img-placeholder`);
+      if (placeholder) placeholder.outerHTML = `<img src="/static/images/exercises/${esc(data.filename)}" class="img-thumb" alt="">`;
+      toast('Image uploaded');
+    } else { toast('Upload failed', 'error'); }
+  };
+  input.click();
+}
+
+// ── Save schedule (week meta) ──────────────────────────────────────────────
+async function saveSchedule() {
+  try {
+    await saveWeekMeta();
+    toast('Schedule saved');
+  } catch(e) { toast('Save failed', 'error'); }
+}
+
+// ── Finalize & export ──────────────────────────────────────────────────────
+async function finalizeAndExport() {
+  try {
+    await saveWeekMeta();
+    await api('POST', `/schedules/${state.activeSchedule.id}/finalize`);
+    state.activeSchedule.status = 'final';
+    document.getElementById('builder-status-badge').innerHTML =
+      `<span class="status-dot status-final"></span>Final`;
+    toast('Schedule finalized');
+    exportPDF();
+  } catch(e) { toast('Failed to finalize', 'error'); }
+}
+
+// ── PDF preview & export ───────────────────────────────────────────────────
+function setPDFMode(mode) {
+  state.pdfMode = mode;
+  document.getElementById('pdf-mode-dark').style.borderColor  = mode==='dark'  ? 'var(--gold)' : '';
+  document.getElementById('pdf-mode-dark').style.color        = mode==='dark'  ? 'var(--gold)' : '';
+  document.getElementById('pdf-mode-light').style.borderColor = mode==='light' ? 'var(--gold)' : '';
+  document.getElementById('pdf-mode-light').style.color       = mode==='light' ? 'var(--gold)' : '';
+  const iframe = document.getElementById('pdf-iframe');
+  if (iframe.src) {
+    const sid = state.activeSchedule?.id;
+    if (sid) iframe.src = `/api/schedules/${sid}/pdf/preview?mode=${mode}&_=${Date.now()}`;
+  }
+}
+
+function previewPDF() {
+  const sid = state.activeSchedule?.id;
+  if (!sid) { toast('No schedule open', 'error'); return; }
+  setPDFMode(state.pdfMode);
+  document.getElementById('pdf-iframe').src = `/api/schedules/${sid}/pdf/preview?mode=${state.pdfMode}&_=${Date.now()}`;
+  openModal('pdf-preview-modal');
+}
+
+function exportPDF() {
+  const sid = state.activeSchedule?.id;
+  if (!sid) { toast('No schedule open', 'error'); return; }
+  window.open(`/api/schedules/${sid}/pdf?mode=${state.pdfMode}`, '_blank');
+}
+
+async function triggerPDFExport(sid) {
+  window.open(`/api/schedules/${sid}/pdf?mode=${state.pdfMode}`, '_blank');
+}
+
+// ── New client modal ───────────────────────────────────────────────────────
+function openNewClientModal() {
+  document.getElementById('new-client-name').value  = '';
+  document.getElementById('new-client-notes').value = '';
+  openModal('modal-new-client');
+}
+
+async function createClient() {
+  const name = document.getElementById('new-client-name').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  try {
+    await api('POST', '/clients', { name, notes: document.getElementById('new-client-notes').value });
+    await loadClients();
+    closeModal('modal-new-client');
+    renderSidebar();
+    toast('Client created');
+  } catch(e) { toast('Failed to create client', 'error'); }
+}
+
+// ── New schedule modal ─────────────────────────────────────────────────────
+function openNewScheduleModal() {
+  if (!state.activeClient) { toast('Select a client first', 'error'); return; }
+  const now = new Date();
+  const week = getISOWeek(now);
+  document.getElementById('ns-week').value = week;
+  document.getElementById('ns-year').value = now.getFullYear();
+  openModal('modal-new-schedule');
+}
+
+async function createSchedule() {
+  const week = parseInt(document.getElementById('ns-week').value);
+  const year = parseInt(document.getElementById('ns-year').value);
+  if (!week || !year) { toast('Fill in week and year', 'error'); return; }
+  try {
+    const res = await api('POST', '/schedules', {
+      client_id: state.activeClient.id,
+      week_number: week, year
+    });
+    closeModal('modal-new-schedule');
+    await openSchedule(res.id);
+    state.clientSchedules = await api('GET', `/clients/${state.activeClient.id}/schedules`);
+  } catch(e) { toast('Failed — that week may already exist', 'error'); }
+}
+
+// ── Delete schedule ────────────────────────────────────────────────────────
+async function deleteSchedule(sid) {
+  if (!confirm('Delete this schedule? This cannot be undone.')) return;
+  await api('DELETE', `/schedules/${sid}`);
+  state.clientSchedules = state.clientSchedules.filter(s => s.id !== sid);
+  renderDashboard();
+  toast('Schedule deleted');
+}
+
+// ── Duplicate modal ────────────────────────────────────────────────────────
+function openDuplicateModal() {
+  if (!state.activeClient) { toast('Select a client first', 'error'); return; }
+  const src = document.getElementById('dup-source');
+  src.innerHTML = state.clientSchedules.map(s =>
+    `<option value="${s.id}">Week ${s.week_number} (${s.year}) — ${s.status}</option>`
+  ).join('');
+  const now = new Date();
+  document.getElementById('dup-week').value = getISOWeek(now);
+  document.getElementById('dup-year').value = now.getFullYear();
+  openModal('modal-duplicate');
+}
+
+async function duplicateSchedule() {
+  const sid  = parseInt(document.getElementById('dup-source').value);
+  const week = parseInt(document.getElementById('dup-week').value);
+  const year = parseInt(document.getElementById('dup-year').value);
+  try {
+    const res = await api('POST', `/schedules/${sid}/duplicate`, { week_number: week, year });
+    closeModal('modal-duplicate');
+    state.clientSchedules = await api('GET', `/clients/${state.activeClient.id}/schedules`);
+    await openSchedule(res.id);
+    toast('Schedule duplicated — now editing the new copy');
+  } catch(e) { toast('Failed to duplicate', 'error'); }
+}
+
+// ── Template modal ─────────────────────────────────────────────────────────
+function openTemplateModal() {
+  if (!state.activeSchedule) { toast('Open a schedule first', 'error'); return; }
+
+  // Client schedules section
+  const clientHtml = state.clientSchedules
+    .filter(s => s.id !== state.activeSchedule.id)
+    .slice(0, 4)
+    .map(s => `
+      <div class="tpl-card">
+        <div class="tpl-name">Week ${s.week_number} — ${esc(state.activeClient.name)}</div>
+        <div class="tpl-meta">${formatDate(s.date_start)} · ${s.status}</div>
+        <button class="btn btn-sm" style="margin-top:10px"
+          onclick="loadFromSchedule(${s.id})">Use as base</button>
+      </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No previous schedules.</div>';
+
+  document.getElementById('tpl-client-schedules').innerHTML = clientHtml;
+
+  // Global templates
+  const tplHtml = state.templates.map(t => `
+    <div class="tpl-card">
+      <div class="tpl-name">${esc(t.name)}</div>
+      <div class="tpl-meta">${esc(t.description||'')}</div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="closeModal('modal-template');toast('Template loaded as starting point')">Load</button>
+        <button class="btn btn-xs btn-danger" onclick="deleteTemplate(${t.id})">Delete</button>
+      </div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No templates saved yet.</div>';
+
+  document.getElementById('tpl-global').innerHTML = tplHtml;
+  openModal('modal-template');
+}
+
+async function loadFromSchedule(sid) {
+  if (!confirm('This will replace the current schedule content. Continue?')) return;
+  try {
+    const res = await api('POST', `/schedules/${sid}/duplicate`, {
+      week_number: state.activeSchedule.week_number,
+      year: state.activeSchedule.year,
+    });
+    // The duplicate creates a new schedule — instead we want to copy exercises into current
+    // Simpler: reload the duplicated one as active
+    await openSchedule(res.id);
+    closeModal('modal-template');
+    toast('Loaded from previous schedule');
+  } catch(e) { toast('Failed', 'error'); }
+}
+
+async function deleteTemplate(tid) {
+  if (!confirm('Delete this template?')) return;
+  await api('DELETE', `/templates/${tid}`);
+  await loadTemplates();
+  openTemplateModal();
+  toast('Template deleted');
+}
+
+function openSaveAsTemplateModal() {
+  closeModal('modal-template');
+  document.getElementById('tpl-name').value = '';
+  document.getElementById('tpl-desc').value = '';
+  openModal('modal-save-template');
+}
+
+async function saveAsTemplate() {
+  const name = document.getElementById('tpl-name').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  await api('POST', '/templates', { name, description: document.getElementById('tpl-desc').value });
+  await loadTemplates();
+  closeModal('modal-save-template');
+  toast('Template saved');
+}
+
+// ── Settings screen ────────────────────────────────────────────────────────
+function renderSettingsScreen() {
+  // Populate fields
+  document.getElementById('set-pt-name').value = state.settings.pt_name || '';
+  const logo = state.settings.pt_logo;
+  if (logo) {
+    document.getElementById('set-logo-preview').src = `/static/images/${logo}`;
+    document.getElementById('set-logo-preview').style.display = 'block';
+    document.getElementById('set-logo-placeholder').style.display = 'none';
+  }
+
+  // Muscle group chips
+  const chips = document.getElementById('muscle-group-chips');
+  chips.innerHTML = state.muscleGroups.map(mg => `
+    <div class="chip selected" style="border-color:${mg.color};color:${mg.color};background:${mg.color}22"
+      title="${esc(mg.name)}">
+      ${esc(mg.name)}
+      <button style="margin-left:4px;background:none;border:none;cursor:pointer;color:inherit;font-size:11px"
+        onclick="deleteMuscleGroup(event,${mg.id})">✕</button>
+    </div>`).join('');
+
+  // Exercise library
+  renderLibraryTable();
+
+  // Populate lib exercise modal mg selects
+  const mgSel = document.getElementById('lib-ex-mg');
+  mgSel.innerHTML = '<option value="">— select —</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+}
+
+function renderLibraryTable() {
+  const tbody = document.getElementById('exercise-library-tbody');
+  tbody.innerHTML = state.exercises.map(ex => `
+    <tr>
+      <td style="font-size:13px">${esc(ex.name)}</td>
+      <td>
+        ${ex.muscle_group_name
+          ? `<span class="muscle-pill" style="background:${ex.muscle_group_color||'var(--gold)'}22;color:${ex.muscle_group_color||'var(--gold)'}">${esc(ex.muscle_group_name)}</span>`
+          : '<span style="color:var(--muted);font-size:11px">—</span>'}
+      </td>
+      <td style="font-size:13px;color:var(--gold)">${ex.default_sets||'—'}</td>
+      <td style="font-size:13px;color:var(--gold)">${esc(ex.default_reps||'—')}</td>
+      <td>
+        ${ex.image_filename
+          ? `<img src="/static/images/exercises/${esc(ex.image_filename)}" class="img-thumb" alt="">`
+          : `<div class="img-placeholder" onclick="uploadLibraryImage(${ex.id})" title="Upload">+</div>`}
+      </td>
+      <td>
+        <button class="btn btn-xs btn-danger" onclick="deleteLibraryExercise(${ex.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function saveSettings() {
+  const name = document.getElementById('set-pt-name').value.trim();
+  await api('PUT', '/settings', { pt_name: name });
+  state.settings.pt_name = name;
+  toast('Settings saved');
+}
+
+async function uploadLogo() {
+  const file = document.getElementById('set-logo-file').files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  const res = await fetch('/api/settings/logo', { method: 'POST', body: fd });
+  if (res.ok) {
+    const data = await res.json();
+    state.settings.pt_logo = data.filename;
+    document.getElementById('set-logo-preview').src = `/static/images/${data.filename}`;
+    document.getElementById('set-logo-preview').style.display = 'block';
+    document.getElementById('set-logo-placeholder').style.display = 'none';
+    toast('Logo uploaded');
+  } else { toast('Upload failed', 'error'); }
+}
+
+function openAddMuscleGroupModal() {
+  document.getElementById('mg-name').value  = '';
+  document.getElementById('mg-color').value = '#f9b233';
+  openModal('modal-add-mg');
+}
+
+async function createMuscleGroup() {
+  const name  = document.getElementById('mg-name').value.trim();
+  const color = document.getElementById('mg-color').value;
+  if (!name) { toast('Name required', 'error'); return; }
+  await api('POST', '/muscle-groups', { name, color });
+  await loadMuscleGroups();
+  closeModal('modal-add-mg');
+  renderSettingsScreen();
+  toast('Muscle group added');
+}
+
+async function deleteMuscleGroup(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this muscle group?')) return;
+  await api('DELETE', `/muscle-groups/${id}`);
+  await loadMuscleGroups();
+  renderSettingsScreen();
+  toast('Muscle group removed');
+}
+
+function openAddExerciseModal_lib() { openAddExerciseModal(null, 'library'); }
+
+function openAddExerciseModal(dayId, tab) {
+  if (dayId === null || dayId === undefined) {
+    // Called from settings — open library add modal instead
+    openModal('modal-add-ex-lib');
+    const mgSel = document.getElementById('lib-ex-mg');
+    mgSel.innerHTML = '<option value="">— select —</option>' +
+      state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+    return;
+  }
+  // Called from builder
+  document.getElementById('ae-day-id').value = dayId;
+  switchAddTab(tab || 'library');
+  const mgSel = document.getElementById('ae-filter-mg');
+  mgSel.innerHTML = '<option value="">All muscle groups</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+  const mgCustom = document.getElementById('ae-custom-mg');
+  mgCustom.innerHTML = '<option value="">— select —</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+  renderLibraryList();
+  openModal('modal-add-exercise');
+}
+
+function openAddExerciseModal_settings() {
+  openModal('modal-add-ex-lib');
+  const mgSel = document.getElementById('lib-ex-mg');
+  mgSel.innerHTML = '<option value="">— select —</option>' +
+    state.muscleGroups.map(mg => `<option value="${mg.id}">${esc(mg.name)}</option>`).join('');
+}
+
+// Fix settings button to call correct fn
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('#screen-settings .btn[onclick="openAddExerciseModal()"]')
+    ?.setAttribute('onclick', 'openAddExerciseModal_settings()');
+});
+
+async function createLibraryExercise() {
+  const name = document.getElementById('lib-ex-name').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  await api('POST', '/exercises', {
+    name,
+    muscle_group_id: parseInt(document.getElementById('lib-ex-mg').value) || null,
+    default_sets:    parseInt(document.getElementById('lib-ex-sets').value) || null,
+    default_reps:    document.getElementById('lib-ex-reps').value.trim(),
+  });
+  await loadExercises();
+  closeModal('modal-add-ex-lib');
+  renderSettingsScreen();
+  toast('Exercise added to library');
+}
+
+async function deleteLibraryExercise(id) {
+  if (!confirm('Remove from library?')) return;
+  await api('DELETE', `/exercises/${id}`);
+  await loadExercises();
+  renderLibraryTable();
+  toast('Removed from library');
+}
+
+async function uploadLibraryImage(exId) {
+  const input = document.createElement('input');
+  input.type  = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const res = await fetch(`/api/exercises/${exId}/image`, { method: 'POST', body: fd });
+    if (res.ok) {
+      await loadExercises();
+      renderLibraryTable();
+      toast('Image uploaded');
+    } else { toast('Upload failed', 'error'); }
+  };
+  input.click();
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function cap(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }
+
+function formatDate(str) {
+  if (!str) return '';
+  try {
+    const d = new Date(str + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return str; }
+}
+
+function getISOWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+// ── Start ──────────────────────────────────────────────────────────────────
+boot().catch(console.error);
+</script>
+</body>
+</html>
