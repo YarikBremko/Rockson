@@ -3,8 +3,6 @@
 # Rockson Performance — Schedule App  |  install.sh
 # Run this once on a fresh Linux machine to set everything up.
 # ─────────────────────────────────────────────────────────────────────────────
-set -e
-
 APP_NAME="rockson-schedule"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$APP_DIR/venv"
@@ -73,9 +71,22 @@ info "pip and venv OK"
 info "Installing system dependencies for PDF export (WeasyPrint)..."
 if command -v apt-get &>/dev/null; then
   sudo apt-get update -qq
+
+  # Core packages — required on all Debian/Ubuntu/Raspberry Pi OS versions
   sudo apt-get install -y -qq \
     python3-venv libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
-    libcairo2 libcairo2-dev libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    libcairo2 libcairo2-dev libffi-dev shared-mime-info
+
+  # libgdk-pixbuf was renamed in Debian 12 (Bookworm) / Raspberry Pi OS 2023+
+  # Try the new name first, fall back to the old name
+  if apt-cache show libgdk-pixbuf-2.0-0 &>/dev/null 2>&1; then
+    sudo apt-get install -y -qq libgdk-pixbuf-2.0-0
+  elif apt-cache show libgdk-pixbuf2.0-0 &>/dev/null 2>&1; then
+    sudo apt-get install -y -qq libgdk-pixbuf2.0-0
+  else
+    warn "Could not find libgdk-pixbuf — PDF image rendering may not work, but the rest of the app will."
+  fi
+
 elif command -v dnf &>/dev/null; then
   sudo dnf install -y python3-virtualenv pango cairo gdk-pixbuf2 libffi-devel
 elif command -v pacman &>/dev/null; then
