@@ -7,8 +7,10 @@ A personal trainer schedule builder. Create, manage, and export weekly training 
 ## Quick start (first time)
 
 ```bash
+sudo apt-get update
+sudo apt install git
 git clone https://github.com/YarikBremko/Rockson/
-cd rockson-schedule
+cd rockson
 chmod +x install.sh
 ./install.sh
 ```
